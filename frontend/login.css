@@ -1,61 +1,45 @@
-/* =========================
-   GLOBAL BACKGROUND (LOGIN)
-========================= */
+/* login (background) */
 body {
     margin: 0;
     padding: 0;
     font-family: "Inter", Arial, sans-serif;
     min-height: 100vh;
-
     display: flex;
     justify-content: center;
     align-items: center;
-
     background: radial-gradient(circle at top, #1b1642, #070a1a 70%);
     color: #e5e7eb;
 }
 
-/* =========================
-   LOGIN CONTAINER
-========================= */
+/* login_container */
 .container {
     width: 100%;
     max-width: 420px;
-
     background: rgba(15, 23, 42, 0.85);
     border: 1px solid rgba(139, 92, 246, 0.25);
     backdrop-filter: blur(14px);
-
     border-radius: 18px;
     padding: 30px;
-
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
-/* =========================
-   TITLE
-========================= */
+/* title */
 h3 {
     color: #ffffff;
     font-weight: 700;
     margin-bottom: 20px;
 }
 
-/* =========================
-   INPUTS
-========================= */
+/* inputs */
 input {
     width: 100%;
     padding: 12px 14px;
     margin-bottom: 12px;
-
     background: rgba(2, 6, 23, 0.9);
     border: 1px solid rgba(139, 92, 246, 0.3);
     border-radius: 12px;
-
     color: #f8fafc;
     outline: none;
-
     transition: 0.2s ease;
 }
 
@@ -68,20 +52,15 @@ input:focus {
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
 }
 
-/* =========================
-   BUTTON
-========================= */
+/* button */
 .btn-primary {
     width: 100%;
     padding: 12px;
-
     background: linear-gradient(90deg, #6366f1, #8b5cf6);
     border: none;
     border-radius: 12px;
-
     font-weight: 600;
     color: white;
-
     transition: 0.2s ease;
 }
 
@@ -90,9 +69,6 @@ input:focus {
     transform: translateY(-1px);
 }
 
-/* =========================
-   ERROR TEXT
-========================= */
 #error {
     color: #f87171;
     font-size: 14px;
@@ -100,9 +76,6 @@ input:focus {
     min-height: 18px;
 }
 
-/* =========================
-   SMALL UX POLISH
-========================= */
 .container,
 input,
 .btn-primary {
