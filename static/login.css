@@ -1,5 +1,5 @@
 /* login (background) */
-body {
+.login-page {
     margin: 0;
     padding: 0;
     font-family: "Inter", Arial, sans-serif;
@@ -12,7 +12,7 @@ body {
 }
 
 /* login_container */
-.container {
+.login-page .container {
     width: 100%;
     max-width: 420px;
     background: rgba(15, 23, 42, 0.85);
@@ -24,14 +24,14 @@ body {
 }
 
 /* title */
-h3 {
+.login-page h3 {
     color: #ffffff;
     font-weight: 700;
     margin-bottom: 20px;
 }
 
 /* inputs */
-input {
+.login-page input {
     width: 100%;
     padding: 12px 14px;
     margin-bottom: 12px;
@@ -43,17 +43,17 @@ input {
     transition: 0.2s ease;
 }
 
-input::placeholder {
+.login-page input::placeholder {
     color: #94a3b8;
 }
 
-input:focus {
+.login-page input:focus {
     border-color: #8b5cf6;
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
 }
 
 /* button */
-.btn-primary {
+.login-page .btn-primary {
     width: 100%;
     padding: 12px;
     background: linear-gradient(90deg, #6366f1, #8b5cf6);
@@ -64,20 +64,21 @@ input:focus {
     transition: 0.2s ease;
 }
 
-.btn-primary:hover {
+.login-page .btn-primary:hover {
     opacity: 0.9;
     transform: translateY(-1px);
 }
 
-#error {
+.login-page #error {
     color: #f87171;
     font-size: 14px;
     margin-top: 12px;
     min-height: 18px;
 }
 
-.container,
-input,
-.btn-primary {
+/* transitions */
+.login-page .container,
+.login-page input,
+.login-page .btn-primary {
     transition: all 0.2s ease;
 }
