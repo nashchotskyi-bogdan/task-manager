@@ -11,8 +11,11 @@ from .serializers import (
     CategorySerializer,
     CommentSerializer
 )
+from rest_framework.permissions import AllowAny
+from rest_framework.decorators import permission_classes
 
 @api_view(["POST"])
+@permission_classes([AllowAny])
 def register(request):
     username = request.data.get("username")
     email = request.data.get("email")
