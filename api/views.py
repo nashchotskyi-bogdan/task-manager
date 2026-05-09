@@ -20,7 +20,7 @@ def register(request):
     if not username or not email or not password:
         return Response({"detail": "All fields are required"}, status=400)
     if User.objects.filter(username=username).exists():
-        return Response({"detail": "Username already exists"}, status=400)\
+        return Response({"detail": "Username already exists"}, status=400)
     if User.objects.filter(email=email).exists():
         return Response({"detail": "Email already exists"}, status=400)
     user = User.objects.create_user(
