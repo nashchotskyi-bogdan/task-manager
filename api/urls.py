@@ -6,3 +6,8 @@ router.register(r"projects", ProjectViewSet, basename="projects")
 router.register(r"categories", CategoryViewSet, basename="categories")
 router.register(r"comments", CommentViewSet, basename="comments")
 urlpatterns = router.urls
+from django.urls import path
+from .views import register
+urlpatterns = [
+    path("api/register/", register),
+]
