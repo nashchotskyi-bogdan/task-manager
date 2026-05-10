@@ -57,9 +57,9 @@ class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
     def get_queryset(self):
-        return Category.objects.all()
+        return Category.objects.filter(owner=self.request.user)
     def perform_create(self, serializer):
-        serializer.save()
+        serializer.save(owner=self.request.user)
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
