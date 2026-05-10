@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <title>Task Manager Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <style>
         * {
     margin: 0;
@@ -227,7 +226,7 @@ const PROJECTS_API = "http://127.0.0.1:8000/api/projects/";
 const CATEGORIES_API = "http://127.0.0.1:8000/api/categories/";
 let editingTask = null;
 let tasks = [];
-let viewMode = "all"; // 🔥 NEW
+let viewMode = "all";
 const $ = (id) => document.getElementById(id);
 function authHeader() {
     return {
@@ -235,68 +234,79 @@ function authHeader() {
         "Authorization": "Bearer " + localStorage.getItem("access")
     };
 }
-/* toggle */
+/* view_toggle */
 function toggleView() {
     viewMode = viewMode === "all" ? "grouped" : "all";
     renderTasks(tasks);
 }
-
-/* create */
+/* create_task */
 async function createTask() {
+    const title = $("title").value.trim();
+    const description = $("description").value.trim();
+    const project = $("project").value;
+    const category = $("category").value;
+    if (!title) return;
     const payload = {
-        title: $("title").value.trim(),
-        description: $("description").value.trim(),
-        project: $("project").value ? Number($("project").value) : null,
-        category: $("category").value ? Number($("category").value) : null,
+        title,
+        description,
+        project: project ? Number(project) : null,
+        category: category ? Number(category) : null,
         completed: false
     };
-    await fetch(API, {
-        method: "POST",
-        headers: authHeader(),
-        body: JSON.stringify(payload)
-    });
-    $("title").value = "";
-    $("description").value = "";
-    loadTasks();
-}
-
-/* load */
-async function loadTasks() {
-    const res = await fetch(API, { headers: authHeader() });
-    let data = await res.json();
-    tasks = data;
-    const q = $("searchInput").value?.toLowerCase();
-    if (q) {
-        data = data.filter(t =>
-            t.title.toLowerCase().includes(q) ||
-            (t.description || "").toLowerCase().includes(q)
-        );
+    try {
+        const res = await fetch(API, {
+            method: "POST",
+            headers: authHeader(),
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            console.error("CREATE ERROR:", await res.text());
+            return;
+        }
+        $("title").value = "";
+        $("description").value = "";
+        loadTasks();
+    } catch (err) {
+        console.error("NETWORK ERROR:", err);
     }
-    renderTasks(data);
 }
-
-/* group_by_project */
+/* load_tasks */
+async function loadTasks() {
+    try {
+        const res = await fetch(API, { headers: authHeader() });
+        const data = await res.json();
+        tasks = Array.isArray(data) ? data : [];
+        const q = $("searchInput").value?.toLowerCase() || "";
+        const filtered = q
+            ? tasks.filter(t =>
+                (t.title || "").toLowerCase().includes(q) ||
+                (t.description || "").toLowerCase().includes(q)
+              )
+            : tasks;
+        renderTasks(filtered);
+    } catch (err) {
+        console.error("LOAD ERROR:", err);
+    }
+}
+/* grouping */
 function groupByProject(list) {
-    const grouped = {};
-    list.forEach(t => {
+    return list.reduce((acc, t) => {
         const key = t.project_name || "No Project";
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(t);
-    });
-    return grouped;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(t);
+        return acc;
+    }, {});
 }
-
 /* render */
 function renderTasks(data) {
-    if (!data.length) {
-        $("tasks").innerHTML = `<div class="text-muted">No tasks</div>`;
+    const container = $("tasks");
+    if (!data || data.length === 0) {
+        container.innerHTML = `<div class="text-muted">No tasks</div>`;
         return;
     }
-
-    /* grouped_view */
     if (viewMode === "grouped") {
         const grouped = groupByProject(data);
-        $("tasks").innerHTML = Object.entries(grouped).map(([project, items]) => `
+        container.innerHTML = Object.entries(grouped).map(([project, items]) => `
             <div class="col-12 mb-4">
                 <h4 class="mb-3">${project}</h4>
                 <div class="row">
@@ -306,17 +316,14 @@ function renderTasks(data) {
         `).join("");
         return;
     }
-
-    /* normal_view */
-    $("tasks").innerHTML = data.map(taskCard).join("");
+    container.innerHTML = data.map(taskCard).join("");
 }
-
 /* task_card */
 function taskCard(task) {
     return `
     <div class="col-md-4 mb-3">
         <div class="task-card">
-            <h5>${task.title}</h5>
+            <h5>${task.title || ""}</h5>
             <p>${task.description || ""}</p>
             <p class="small text-muted mb-1">
                 Project: ${task.project_name || "None"}
@@ -328,92 +335,109 @@ function taskCard(task) {
                 ${task.completed ? "Done" : "Active"}
             </span>
             <div class="mt-2 d-flex gap-2 flex-wrap">
-                <button class="btn btn-warning btn-sm"
-                    onclick="openEdit(${task.id})">Edit</button>
+                <button class="btn btn-warning btn-sm" onclick="openEdit(${task.id})">
+                    Edit
+                </button>
                 <button class="btn btn-${task.completed ? "secondary" : "success"} btn-sm"
-    onclick="toggleTask(${task.id}, ${task.completed})">
-    ${task.completed ? "Mark as Inactive" : "Complete"}
-</button>
-                <button class="btn btn-danger btn-sm"
-                    onclick="deleteTask(${task.id})">Delete</button>
+                        onclick="toggleTask(${task.id}, ${task.completed})">
+                    ${task.completed ? "Undo" : "Complete"}
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">
+                    Delete
+                </button>
             </div>
         </div>
     </div>`;
 }
-
-/* delete/toggle */
+/* delete */
 async function deleteTask(id) {
-    await fetch(API + id + "/", {
-        method: "DELETE",
-        headers: authHeader()
-    });
-    loadTasks();
-}
-async function toggleTask(id, current) {
-    await fetch(API + id + "/", {
-        method: "PATCH",
-        headers: authHeader(),
-        body: JSON.stringify({ completed: !current })
-    });
-    loadTasks();
-}
-
-/* edit */
-async function openEdit(id) {
-    const task = tasks.find(t => t.id === id);
-    if (!task) {
-        console.error("Task not found:", id);
-        return;
+    try {
+        await fetch(API + id + "/", {
+            method: "DELETE",
+            headers: authHeader()
+        });
+        loadTasks();
+    } catch (err) {
+        console.error(err);
     }
+}
+/* toggle */
+async function toggleTask(id, current) {
+    try {
+        await fetch(API + id + "/", {
+            method: "PATCH",
+            headers: authHeader(),
+            body: JSON.stringify({ completed: !current })
+        });
+        loadTasks();
+    } catch (err) {
+        console.error(err);
+    }
+}
+/* edit_open */
+function openEdit(id) {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
     editingTask = task;
     $("editTitle").value = task.title || "";
     $("editDescription").value = task.description || "";
     $("editModal").style.display = "block";
 }
-
+/* edit_save */
 async function saveEdit() {
-    const res = await fetch(API + editingTask.id + "/", {
-        method: "PATCH",
-        headers: authHeader(),
-        body: JSON.stringify({
-            title: $("editTitle").value,
-            description: $("editDescription").value
-        })
-    });
-    const updated = await res.json();
-    closeEdit();
-    loadTasks();
+    if (!editingTask) return;
+    try {
+        await fetch(API + editingTask.id + "/", {
+            method: "PATCH",
+            headers: authHeader(),
+            body: JSON.stringify({
+                title: $("editTitle").value,
+                description: $("editDescription").value
+            })
+        });
+        closeEdit();
+        loadTasks();
+    } catch (err) {
+        console.error(err);
+    }
 }
-
-/* load_selects*/
+/* close_modal*/
+function closeEdit() {
+    $("editModal").style.display = "none";
+    editingTask = null;
+}
+/* load_projects */
 async function loadProjects() {
-    const res = await fetch(PROJECTS_API, { headers: authHeader() });
-    const data = await res.json();
-    $("project").innerHTML =
-        `<option value="">Project</option>` +
-        data.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+    try {
+        const res = await fetch(PROJECTS_API, { headers: authHeader() });
+        const data = await res.json();
+        $("project").innerHTML =
+            `<option value="">Project</option>` +
+            data.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+    } catch (err) {
+        console.error(err);
+    }
 }
-
+/* load_categories */
 async function loadCategories() {
-    const res = await fetch(CATEGORIES_API, { headers: authHeader() });
-    const data = await res.json();
-    $("category").innerHTML =
-        `<option value="">Category</option>` +
-        data.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+    try {
+        const res = await fetch(CATEGORIES_API, { headers: authHeader() });
+        const data = await res.json();
+        $("category").innerHTML =
+            `<option value="">Category</option>` +
+            data.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+    } catch (err) {
+        console.error(err);
+    }
 }
-
 /* logout */
 function logout() {
     localStorage.clear();
     window.location.href = "login.html";
 }
-
-/* init */
 document.addEventListener("DOMContentLoaded", () => {
     loadTasks();
     loadProjects();
     loadCategories();
 });
 </script>
-</body>
-</html>

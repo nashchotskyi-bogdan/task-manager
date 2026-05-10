@@ -18,12 +18,18 @@ class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = "__all__"
+        extra_kwargs = {
+            "project": {"required": False, "allow_null": True},
+            "category": {"required": False, "allow_null": True},
+        }
     def validate_project(self, value):
-        if value and value.owner != self.context["request"].user:
+        request = self.context.get("request")
+        if value and request and value.owner != request.user:
             raise serializers.ValidationError("Invalid project")
         return value
     def validate_category(self, value):
-        if value and value.owner != self.context["request"].user:
+        request = self.context.get("request")
+        if value and request and value.owner != request.user:
             raise serializers.ValidationError("Invalid category")
         return value
 
