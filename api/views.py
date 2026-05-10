@@ -4,8 +4,15 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import PermissionDenied
 from .models import Task, Project, Category, Comment
-from .serializers import TaskSerializer, ProjectSerializer, CategorySerializer, CommentSerializer
+from .serializers import (
+    TaskSerializer,
+    ProjectSerializer,
+    CategorySerializer,
+    CommentSerializer
+)
+from django.db import models
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -14,18 +21,15 @@ def register(request):
     email = request.data.get("email")
     password = request.data.get("password")
     if not username or not email or not password:
-        return Response({"detail": "All fields are required"}, status=400)
+        return Response({"detail": "All fields required"}, status=400)
     if User.objects.filter(username=username).exists():
-        return Response({"detail": "Username already exists"}, status=400)
-    if User.objects.filter(email=email).exists():
-        return Response({"detail": "Email already exists"}, status=400)
+        return Response({"detail": "Username exists"}, status=400)
     user = User.objects.create_user(username=username, email=email, password=password)
     refresh = RefreshToken.for_user(user)
     return Response({
         "access": str(refresh.access_token),
         "refresh": str(refresh)
     })
-
 
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
@@ -47,14 +51,19 @@ class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
     def get_queryset(self):
-        return Task.objects.filter(project__owner=self.request.user)
+        return Task.objects.filter(
+            models.Q(project__owner=self.request.user) |
+            models.Q(project__isnull=True)
+        )
+    def get_serializer_context(self):
+        return {"request": self.request}
     def perform_create(self, serializer):
         project = serializer.validated_data.get("project")
         category = serializer.validated_data.get("category")
         if project and project.owner != self.request.user:
-            raise PermissionError("Invalid project")
+            raise PermissionDenied("Invalid project")
         if category and category.owner != self.request.user:
-            raise PermissionError("Invalid category")
+            raise PermissionDenied("Invalid category")
         serializer.save()
 
 class CommentViewSet(viewsets.ModelViewSet):
