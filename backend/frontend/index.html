@@ -256,7 +256,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 function logout(){
     localStorage.clear();
-    location.href="login.html";
+    location.href = "/app/";
 }
 function editTask(id){
     const t = tasks.find(x=>x.id===id);
