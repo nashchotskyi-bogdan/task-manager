@@ -161,6 +161,8 @@ async function createTask() {
             category:$("category").value || null
         })
     });
+    $("title").value = "";
+    $("description").value = "";
     loadTasks();
 }
 /* projects */
@@ -184,6 +186,7 @@ async function createProject() {
         headers:auth(),
         body:JSON.stringify({ name:$("projectName").value })
     });
+    $("projectName").value = "";
     loadProjects();
 }
 async function editProject(id,name){
@@ -194,6 +197,7 @@ async function editProject(id,name){
         headers:auth(),
         body:JSON.stringify({ name:newName })
     });
+    $("projectName").value = "";
     loadProjects();
 }
 async function deleteProject(id){
@@ -224,6 +228,7 @@ async function createCategory(){
         headers:auth(),
         body:JSON.stringify({ name:$("categoryName").value })
     });
+    $("categoryName").value = "";
     loadCategories();
 }
 async function editCategory(id,name){
@@ -234,6 +239,7 @@ async function editCategory(id,name){
         headers:auth(),
         body:JSON.stringify({ name:newName })
     });
+    $("categoryName").value = "";
     loadCategories();
 }
 async function deleteCategory(id){
