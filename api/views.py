@@ -13,6 +13,9 @@ from .serializers import (
     CommentSerializer
 )
 from django.db import models
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+import re
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -22,9 +25,26 @@ def register(request):
     password = request.data.get("password")
     if not username or not email or not password:
         return Response({"detail": "All fields required"}, status=400)
+    try:
+        validate_email(email)
+    except ValidationError:
+        return Response(
+            {"detail": "Це не є пошта. Введіть наново свою пошту."},
+            status=400
+        )
+    password_regex = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$'
+    if not re.match(password_regex, password):
+        return Response(
+            {"detail": "Придумайте складніший пароль."},
+            status=400
+        )
     if User.objects.filter(username=username).exists():
         return Response({"detail": "Username exists"}, status=400)
-    user = User.objects.create_user(username=username, email=email, password=password)
+    user = User.objects.create_user(
+        username=username,
+        email=email,
+        password=password
+    )
     refresh = RefreshToken.for_user(user)
     return Response({
         "access": str(refresh.access_token),
@@ -53,7 +73,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Task.objects.filter(
             models.Q(project__owner=self.request.user) |
-            models.Q(project__isnull=True)
+            models.Q(category__owner=self.request.user)
         )
     def get_serializer_context(self):
         return {"request": self.request}

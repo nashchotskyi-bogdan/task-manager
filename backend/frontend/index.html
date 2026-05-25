@@ -119,9 +119,9 @@ h5 {
     <button class="btn btn-primary w-100" onclick="saveEdit()">Save</button>
 </div>
 <script>
-const API = "http://127.0.0.1:8000/api/tasks/";
-const PROJECTS_API = "http://127.0.0.1:8000/api/projects/";
-const CATEGORIES_API = "http://127.0.0.1:8000/api/categories/";
+const API = "/api/tasks/";
+const PROJECTS_API = "/api/projects/";
+const CATEGORIES_API = "/api/categories/";
 let tasks = [];
 let editingTask = null;
 const $ = id => document.getElementById(id);
@@ -135,6 +135,10 @@ function auth() {
 /* tasks */
 async function loadTasks() {
     const res = await fetch(API, { headers: auth() });
+    if (!res.ok) {
+        console.error(await res.text());
+        return;
+    }
     tasks = await res.json();
     renderTasks(tasks);
 }
@@ -151,7 +155,7 @@ function renderTasks(data) {
     `).join("");
 }
 async function createTask() {
-    await fetch(API, {
+    const res = await fetch(API, {
         method:"POST",
         headers:auth(),
         body:JSON.stringify({
@@ -161,6 +165,10 @@ async function createTask() {
             category:$("category").value || null
         })
     });
+    if (!res.ok) {
+        console.error(await res.text());
+        return;
+    }
     $("title").value = "";
     $("description").value = "";
     loadTasks();
@@ -168,6 +176,10 @@ async function createTask() {
 /* projects */
 async function loadProjects() {
     const res = await fetch(PROJECTS_API, { headers: auth() });
+    if (!res.ok) {
+        console.error(await res.text());
+        return;
+    }
     const data = await res.json();
     $("project").innerHTML = data.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
     $("projectsList").innerHTML = data.map(p => `
@@ -180,23 +192,31 @@ async function loadProjects() {
         </div>
     `).join("");
 }
-async function createProject() {
-    await fetch(PROJECTS_API,{
+async function createProject(){
+    const res = await fetch(PROJECTS_API,{
         method:"POST",
         headers:auth(),
         body:JSON.stringify({ name:$("projectName").value })
     });
+    if (!res.ok) {
+        console.error(await res.text());
+        return;
+    }
     $("projectName").value = "";
     loadProjects();
 }
 async function editProject(id,name){
     const newName = prompt("Edit project:", name);
     if(!newName) return;
-    await fetch(PROJECTS_API+id+"/",{
+    const res = await fetch(PROJECTS_API+id+"/",{
         method:"PATCH",
         headers:auth(),
         body:JSON.stringify({ name:newName })
     });
+    if (!res.ok) {
+        console.error(await res.text());
+        return;
+    }
     $("projectName").value = "";
     loadProjects();
 }
@@ -210,6 +230,10 @@ async function deleteProject(id){
 /* categories */
 async function loadCategories() {
     const res = await fetch(CATEGORIES_API,{ headers:auth() });
+    if (!res.ok) {
+        console.error(await res.text());
+        return;
+    }
     const data = await res.json();
     $("category").innerHTML = data.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
     $("categoriesList").innerHTML = data.map(c => `
@@ -223,22 +247,30 @@ async function loadCategories() {
     `).join("");
 }
 async function createCategory(){
-    await fetch(CATEGORIES_API,{
+    const res = await fetch(CATEGORIES_API,{
         method:"POST",
         headers:auth(),
         body:JSON.stringify({ name:$("categoryName").value })
     });
+    if (!res.ok) {
+        console.error(await res.text());
+        return;
+    }
     $("categoryName").value = "";
     loadCategories();
 }
 async function editCategory(id,name){
     const newName = prompt("Edit category:", name);
     if(!newName) return;
-    await fetch(CATEGORIES_API+id+"/",{
+    const res = await fetch(CATEGORIES_API+id+"/",{
         method:"PATCH",
         headers:auth(),
         body:JSON.stringify({ name:newName })
     });
+    if (!res.ok) {
+        console.error(await res.text());
+        return;
+    }
     $("categoryName").value = "";
     loadCategories();
 }
@@ -272,7 +304,7 @@ function editTask(id){
     $("editModal").style.display="block";
 }
 async function saveEdit(){
-    await fetch(API+editingTask.id+"/",{
+    const res = await fetch(API+editingTask.id+"/",{
         method:"PATCH",
         headers:auth(),
         body:JSON.stringify({
@@ -280,6 +312,10 @@ async function saveEdit(){
             description:$("editDescription").value
         })
     });
+    if (!res.ok) {
+        console.error(await res.text());
+        return;
+    }
     $("editModal").style.display="none";
     loadTasks();
 }
