@@ -110,16 +110,27 @@ let isLogin = true;
 
 function toggleMode(){
     isLogin = !isLogin;
+
     document.getElementById("title").innerText =
         isLogin ? "Login" : "Register";
+
     document.getElementById("email").style.display =
         isLogin ? "none" : "block";
+
     document.getElementById("passwordRules").style.display =
         isLogin ? "none" : "block";
+
     document.getElementById("toggleText").innerText =
         isLogin ? "Switch to Register" : "Switch to Login";
+
     document.getElementById("error").innerText = "";
+
+    // 🔧 FIX: оновлення правил при вході в Register
+    if (!isLogin) {
+        updatePasswordRules(document.getElementById("password").value);
+    }
 }
+
 function isValidEmail(email){
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
