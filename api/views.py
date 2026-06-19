@@ -51,27 +51,23 @@ def register(request):
         "access": str(refresh.access_token),
         "refresh": str(refresh)
     })
-
-class ProjectViewSet(viewsets.ModelViewSet):
-    serializer_class = ProjectSerializer
+class BaseAuthViewSet(viewsets.ModelViewSet):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+class ProjectViewSet(BaseAuthViewSet):
+    serializer_class = ProjectSerializer
     def get_queryset(self):
         return Project.objects.filter(owner=self.request.user)
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
-
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(BaseAuthViewSet):
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated]
     def get_queryset(self):
         return Category.objects.filter(owner=self.request.user)
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
-
-class TaskViewSet(viewsets.ModelViewSet):
-    authentication_classes = [JWTAuthentication]
+class TaskViewSet(BaseAuthViewSet):
     serializer_class = TaskSerializer
-    permission_classes = [IsAuthenticated]
     def get_queryset(self):
         return Task.objects.filter(
             models.Q(project__owner=self.request.user) |
@@ -87,11 +83,11 @@ class TaskViewSet(viewsets.ModelViewSet):
         if category and category.owner != self.request.user:
             raise PermissionDenied("Invalid category")
         serializer.save()
-
-class CommentViewSet(viewsets.ModelViewSet):
+class CommentViewSet(BaseAuthViewSet):
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
     def get_queryset(self):
-        return Comment.objects.filter(task__project__owner=self.request.user)
+        return Comment.objects.filter(
+            task__project__owner=self.request.user
+        )
     def perform_create(self, serializer):
         serializer.save()

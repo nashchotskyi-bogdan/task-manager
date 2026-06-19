@@ -15,3 +15,4 @@ router.register(r"comments", CommentViewSet, basename="comments")
 urlpatterns = router.urls + [
     path("register/", register),
 ]
+handler404 = "your_app.views.custom_404"

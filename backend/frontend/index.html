@@ -60,6 +60,7 @@ h5 {
     color: #ffffff !important;
 }
 </style>
+<script src="/config.js"></script>
 </head>
 <body>
 <!-- navbar -->
@@ -119,28 +120,17 @@ h5 {
     <button class="btn btn-primary w-100" onclick="saveEdit()">Save</button>
 </div>
 <script>
-const API = "/api/tasks/";
-const PROJECTS_API = "/api/projects/";
-const CATEGORIES_API = "/api/categories/";
 let tasks = [];
 let editingTask = null;
 const $ = id => document.getElementById(id);
-function auth() {
-    const token = localStorage.getItem("access");
-    return {
-        "Content-Type": "application/json",
-        ...(token && { "Authorization": "Bearer " + token })
-    };
-}
 /* tasks */
 async function loadTasks() {
-    const res = await fetch(API, { headers: auth() });
-    if (!res.ok) {
-        console.error(await res.text());
-        return;
+    try {
+        tasks = await TasksAPI.getAll();
+        renderTasks(tasks);
+    } catch (err) {
+        console.error(err);
     }
-    tasks = await res.json();
-    renderTasks(tasks);
 }
 function renderTasks(data) {
     $("tasks").innerHTML = data.map(t => `
@@ -155,170 +145,199 @@ function renderTasks(data) {
     `).join("");
 }
 async function createTask() {
-    const res = await fetch(API, {
-        method:"POST",
-        headers:auth(),
-        body:JSON.stringify({
-            title:$("title").value,
-            description:$("description").value,
-            project:$("project").value || null,
-            category:$("category").value || null
-        })
-    });
-    if (!res.ok) {
-        console.error(await res.text());
+    const title = $("title").value.trim();
+    const description = $("description").value.trim();
+    if (!title) {
+        alert("Title is required");
         return;
     }
-    $("title").value = "";
-    $("description").value = "";
-    loadTasks();
+    if (title.length < 3) {
+        alert("Title must be at least 3 characters");
+        return;
+    }
+    try {
+        await TasksAPI.create({
+            title: title,
+            description: description,
+            project: $("project").value || null,
+            category: $("category").value || null
+        });
+        $("title").value = "";
+        $("description").value = "";
+        loadTasks();
+    } catch (err) {
+        console.error(err);
+    }
 }
 /* projects */
 async function loadProjects() {
-    const res = await fetch(PROJECTS_API, { headers: auth() });
-    if (!res.ok) {
-        console.error(await res.text());
-        return;
-    }
-    const data = await res.json();
-    $("project").innerHTML = data.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
-    $("projectsList").innerHTML = data.map(p => `
-        <div class="d-flex justify-content-between mb-1">
-            ${p.name}
-            <div>
-                <button onclick="editProject(${p.id}, '${p.name}')" class="btn btn-sm btn-warning">✏️</button>
-                <button onclick="deleteProject(${p.id})" class="btn btn-sm btn-danger">🗑</button>
+    try {
+        const data = await ProjectsAPI.getAll();
+        $("project").innerHTML = data.map(p =>
+            `<option value="${p.id}">${p.name}</option>`
+        ).join("");
+        $("projectsList").innerHTML = data.map(p => `
+            <div class="d-flex justify-content-between mb-1">
+                ${p.name}
+                <div>
+                    <button onclick="editProject(${p.id}, '${p.name}')" class="btn btn-sm btn-warning">✏️</button>
+                    <button onclick="deleteProject(${p.id})" class="btn btn-sm btn-danger">🗑</button>
+                </div>
             </div>
-        </div>
-    `).join("");
+        `).join("");
+    } catch (err) {
+        console.error(err);
+    }
 }
-async function createProject(){
-    const res = await fetch(PROJECTS_API,{
-        method:"POST",
-        headers:auth(),
-        body:JSON.stringify({ name:$("projectName").value })
-    });
-    if (!res.ok) {
-        console.error(await res.text());
+async function createProject() {
+    const name = $("projectName").value.trim();
+    if (!name) {
+        alert("Project name is required");
         return;
     }
-    $("projectName").value = "";
-    loadProjects();
+    if (name.length < 2) {
+        alert("Project name must be at least 2 characters");
+        return;
+    }
+    try {
+        await ProjectsAPI.create({ name });
+        $("projectName").value = "";
+        loadProjects();
+    } catch (err) {
+        console.error(err);
+    }
 }
-async function editProject(id,name){
+async function editProject(id, name) {
     const newName = prompt("Edit project:", name);
-    if(!newName) return;
-    const res = await fetch(PROJECTS_API+id+"/",{
-        method:"PATCH",
-        headers:auth(),
-        body:JSON.stringify({ name:newName })
-    });
-    if (!res.ok) {
-        console.error(await res.text());
-        return;
+    if (!newName) return;
+    try {
+        await ProjectsAPI.update(id, { name: newName });
+        $("projectName").value = "";
+        loadProjects();
+    } catch (err) {
+        console.error(err);
     }
-    $("projectName").value = "";
-    loadProjects();
 }
-async function deleteProject(id){
-    await fetch(PROJECTS_API+id+"/",{
-        method:"DELETE",
-        headers:auth()
-    });
-    loadProjects();
+async function deleteProject(id) {
+    try {
+        await ProjectsAPI.delete(id);
+        loadProjects();
+    } catch (err) {
+        console.error(err);
+    }
 }
 /* categories */
 async function loadCategories() {
-    const res = await fetch(CATEGORIES_API,{ headers:auth() });
-    if (!res.ok) {
-        console.error(await res.text());
-        return;
-    }
-    const data = await res.json();
-    $("category").innerHTML = data.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
-    $("categoriesList").innerHTML = data.map(c => `
-        <div class="d-flex justify-content-between mb-1">
-            ${c.name}
-            <div>
-                <button onclick="editCategory(${c.id}, '${c.name}')" class="btn btn-sm btn-warning">✏️</button>
-                <button onclick="deleteCategory(${c.id})" class="btn btn-sm btn-danger">🗑</button>
+    try {
+        const data = await CategoriesAPI.getAll();
+        $("category").innerHTML = data.map(c =>
+            `<option value="${c.id}">${c.name}</option>`
+        ).join("");
+        $("categoriesList").innerHTML = data.map(c => `
+            <div class="d-flex justify-content-between mb-1">
+                ${c.name}
+                <div>
+                    <button onclick="editCategory(${c.id}, '${c.name}')" class="btn btn-sm btn-warning">✏️</button>
+                    <button onclick="deleteCategory(${c.id})" class="btn btn-sm btn-danger">🗑</button>
+                </div>
             </div>
-        </div>
-    `).join("");
+        `).join("");
+    } catch (err) {
+        console.error(err);
+    }
 }
-async function createCategory(){
-    const res = await fetch(CATEGORIES_API,{
-        method:"POST",
-        headers:auth(),
-        body:JSON.stringify({ name:$("categoryName").value })
-    });
-    if (!res.ok) {
-        console.error(await res.text());
+async function createCategory() {
+    const name = $("categoryName").value.trim();
+    if (!name) {
+        alert("Category name is required");
         return;
     }
-    $("categoryName").value = "";
-    loadCategories();
+    if (name.length < 2) {
+        alert("Category name must be at least 2 characters");
+        return;
+    }
+    try {
+        await CategoriesAPI.create({ name });
+        $("categoryName").value = "";
+        loadCategories();
+    } catch (err) {
+        console.error(err);
+    }
 }
-async function editCategory(id,name){
+async function editCategory(id, name) {
     const newName = prompt("Edit category:", name);
-    if(!newName) return;
-    const res = await fetch(CATEGORIES_API+id+"/",{
-        method:"PATCH",
-        headers:auth(),
-        body:JSON.stringify({ name:newName })
-    });
-    if (!res.ok) {
-        console.error(await res.text());
-        return;
+    if (!newName) return;
+    try {
+        await CategoriesAPI.update(id, { name: newName });
+        $("categoryName").value = "";
+        loadCategories();
+    } catch (err) {
+        console.error(err);
     }
-    $("categoryName").value = "";
-    loadCategories();
 }
-async function deleteCategory(id){
-    await fetch(CATEGORIES_API+id+"/",{
-        method:"DELETE",
-        headers:auth()
-    });
-    loadCategories();
+async function deleteCategory(id) {
+    try {
+        await CategoriesAPI.delete(id);
+        loadCategories();
+    } catch (err) {
+        console.error(err);
+    }
 }
-/* task_delete */
-async function deleteTask(id){
-    await fetch(API+id+"/",{ method:"DELETE", headers:auth() });
-    loadTasks();
+/* task delete */
+async function deleteTask(id) {
+    try {
+        await TasksAPI.delete(id);
+        loadTasks();
+    } catch (err) {
+        console.error(err);
+    }
 }
 /* init */
-document.addEventListener("DOMContentLoaded",()=>{
+document.addEventListener("DOMContentLoaded", () => {
+    requireAuth();
     loadTasks();
     loadProjects();
     loadCategories();
 });
-function logout(){
+function logout() {
     localStorage.clear();
     window.location.href = "/";
 }
-function editTask(id){
-    const t = tasks.find(x=>x.id===id);
+function editTask(id) {
+    const t = tasks.find(x => x.id === id);
     editingTask = t;
     $("editTitle").value = t.title;
     $("editDescription").value = t.description;
-    $("editModal").style.display="block";
+    $("editModal").style.display = "block";
 }
-async function saveEdit(){
-    const res = await fetch(API+editingTask.id+"/",{
-        method:"PATCH",
-        headers:auth(),
-        body:JSON.stringify({
-            title:$("editTitle").value,
-            description:$("editDescription").value
-        })
-    });
-    if (!res.ok) {
-        console.error(await res.text());
+async function saveEdit() {
+    const title = $("editTitle").value.trim();
+    const description = $("editDescription").value.trim();
+    if (!title) {
+        alert("Title is required");
         return;
     }
-    $("editModal").style.display="none";
-    loadTasks();
+    if (title.length < 3) {
+        alert("Title must be at least 3 characters");
+        return;
+    }
+    try {
+        await TasksAPI.update(editingTask.id, {
+            title,
+            description
+        });
+        $("editModal").style.display = "none";
+        loadTasks();
+    } catch (err) {
+        console.error(err);
+    }
 }
 </script>
+<script src="/config.js"></script>
+<script src="/utils/auth.js"></script>
+<script src="/api/client.js"></script>
+<script src="/api/tasks.api.js"></script>
+<script src="/api/projects.api.js"></script>
+<script src="/api/categories.api.js"></script>
 </body>
 </html>
