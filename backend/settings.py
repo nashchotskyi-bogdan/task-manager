@@ -3,8 +3,11 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-in48waf3v43@8*-ca+t8#_h1#3!fgivdvtbv%t!@6%5&#t9azp'
-DEBUG = False 
+SECRET_KEY = os.getenv(
+    "SECRET_KEY",
+    "django-insecure-in48waf3v43@8*-ca+t8#_h1#3!fgivdvtbv%t!@6%5&#t9azp"
+)
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
     "localhost",

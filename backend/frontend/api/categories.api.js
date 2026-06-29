@@ -1,5 +1,5 @@
 const BASE = CONFIG.API_BASE;
-export const CategoriesAPI = {
+window.CategoriesAPI = {
     getAll: () =>
         request(BASE + "/categories/"),
     create: (data) =>

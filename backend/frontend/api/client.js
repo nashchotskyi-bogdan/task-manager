@@ -23,3 +23,4 @@ async function request(url, options = {}) {
     }
     return res.json();
 }
+window.request = request;

@@ -1,9 +1,8 @@
-import { TasksAPI } from "../api/tasks.api.js";
 let tasks = [];
-export async function loadTasks() {
+async function loadTasks() {
     tasks = await TasksAPI.getAll();
     return tasks;
 }
-export function getTasks() {
+function getTasks() {
     return tasks;
 }

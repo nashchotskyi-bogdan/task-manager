@@ -1,5 +1,5 @@
 const BASE = CONFIG.API_BASE;
-export const ProjectsAPI = {
+window.ProjectsAPI = {
     getAll: () =>
         request(BASE + "/projects/"),
     create: (data) =>

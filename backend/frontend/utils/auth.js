@@ -4,3 +4,4 @@ function requireAuth() {
         window.location.href = "/";
     }
 }
+window.requireAuth = requireAuth;

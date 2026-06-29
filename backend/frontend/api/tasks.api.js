@@ -1,5 +1,5 @@
 const BASE = CONFIG.API_BASE;
-export const TasksAPI = {
+window.TasksAPI = {
     getAll: () => request(BASE + "/tasks/"),
     create: (data) =>
         request(BASE + "/tasks/", {
